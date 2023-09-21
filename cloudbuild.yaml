@@ -3,11 +3,11 @@
 steps:
   # Step 1: Build the Docker image
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/$_PROJECT_ID/$_IMAGE_NAME:$_SHORT_SHA', '.']  
+  args: ['build', '-t', 'gcr.io/$_PROJECT_ID/$_IMAGE_NAME', '.']  
 
   # Step 2: Push the Docker image to Google Container Registry (GCR)
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$_PROJECT_ID/$_IMAGE_NAME:$_SHORT_SHA'] 
+  args: ['push', 'gcr.io/$_PROJECT_ID/$_IMAGE_NAME'] 
 
   # Step 3: Run the Docker container
 - name: 'gcr.io/cloud-builders/docker'
