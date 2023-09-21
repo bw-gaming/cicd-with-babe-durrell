@@ -47,7 +47,7 @@ module.exports = defineConfig({
   use: {
     /*Maximum time each action such as 'click()' can take. Defaults to 0 (no limit). */
     actionTimeout: 10000,
-    headless: false,
+    headless: true,
     /* Base URL to use in actions like `await page.goto('/')`. */
     // baseURL: 'https://www.apostarperu.pe',
      screenshot: "only-on-failure",
