@@ -1,0 +1,27 @@
+# bluewindow-automation-php cloudbuild.yaml
+
+steps:
+  # Step 1: Build the Docker image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$_PROJECT_ID/$_IMAGE_NAME:$_SHORT_SHA', '.']  
+
+  # Step 2: Push the Docker image to Google Container Registry (GCR)
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$_PROJECT_ID/$_IMAGE_NAME:$_SHORT_SHA'] 
+
+  # Step 3: Run the Docker container
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['run', 'gcr.io/$_PROJECT_ID/$_IMAGE_NAME']  
+
+  # Step 5: Generate Allure report and move to bucket
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['run', 'gcr.io/$_PROJECT_ID/$_IMAGE_NAME', 'npm', 'run', 'allure:generate']
+
+ 
+  # Step 6: Create the .env.production file with the specified content
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    ls
