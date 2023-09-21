@@ -2,26 +2,47 @@
 
 steps:
   # Step 1: Build the Docker image
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/$_PROJECT_ID/$_IMAGE_NAME', '.']  
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["build", "-t", "gcr.io/$_PROJECT_ID/$_IMAGE_NAME", "."]
 
-  # Step 2: Push the Docker image to Google Container Registry (GCR)
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$_PROJECT_ID/$_IMAGE_NAME'] 
+    # Step 2: Push the Docker image to Google Container Registry (GCR)
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$_PROJECT_ID/$_IMAGE_NAME"]
 
-  # Step 3: Run the Docker container
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['run', 'gcr.io/$_PROJECT_ID/$_IMAGE_NAME']  
+    # Step 3: Run the Docker container
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["run", "gcr.io/$_PROJECT_ID/$_IMAGE_NAME"]
 
-  # Step 5: Generate Allure report and move to bucket
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['run', 'gcr.io/$_PROJECT_ID/$_IMAGE_NAME', 'npm', 'run', 'allure:generate']
+    # Step 5: Generate Allure report and move to bucket
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "run",
+        "gcr.io/$_PROJECT_ID/$_IMAGE_NAME",
+        "npm",
+        "run",
+        "allure:generate",
+      ]
 
- 
-  # Step 6: Create the .env.production file with the specified content
-- name: 'gcr.io/cloud-builders/gcloud'
-  entrypoint: 'bash'
-  args:
-  - '-c'
-  - |
-    ls
+  # Step 5:
+  - name: "gcr.io/cloud-builders/gsutil"
+    args:
+      - "-m"
+      - "cp"
+      - "-r"
+      - "allure-report"
+      - "gs://bw-rbo-staging/automation-reports/$BUILD_ID"
+
+    # Step 6:
+  - name: "gcr.io/cloud-builders/gcloud"
+    args:
+      - "compute"
+      - "ssh"
+      - "rbo-staging"
+      - "--zone"
+      - "europe-west1-b"
+      - "--command"
+      - |
+        sudo gsutil -m rsync -r gs://bw-rbo-staging/automation-reports/$BUILD_ID /var/www/html/automation-test
+        sudo chmod 777 -R /var/www/html/
+        sudo systemctl restart apache2
