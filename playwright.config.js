@@ -31,7 +31,7 @@ module.exports = defineConfig({
   workers: process.env.CI ? 1 : 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ['html'],
+    // ['html'],
     ['list'],
     ["allure-playwright"]
     // ['monocart-reporter', {
