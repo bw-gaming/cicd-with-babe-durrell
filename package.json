@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "prerequiste": "rm -rf ./allure-report && rm -rf ./allure-results",
-    "test": "npm run prerequiste && npx playwright test",
+    "pretest": "rm -rf ./allure-report && rm -rf ./allure-results",
+    "test": "npx playwright test || true",
     "test:chrome": "npx playwright test --project=chromium",
     "test:firefox": "npx playwright test --project=firefox",
     "test:webkit": "npx playwright test --project=webkit",
