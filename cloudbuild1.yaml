@@ -9,11 +9,11 @@ steps:
     args:
       - '-c'
       - |
-        # Calculate the current date/time
+        # 1. Get the current date/time
         RELEASE_DATE=$(date '+%Y-%m-%d %H:%M:%S')
         echo "Release Date: $RELEASE_DATE"
 
-        # Build the email content into release_email.txt
+        # 2. Build the email content into a file
         cat <<EOF > release_email.txt
 Subject: Automatic Production Release Notification
 To: release-notifications@bluewindowltd.com
@@ -45,20 +45,18 @@ EOF
         import smtplib
         from email.mime.text import MIMEText
 
-        # NOTE: For security, do NOT hardcode passwords in production.
-        #       Use Secret Manager instead.
+        # SMTP Server Configuration for Outlook
         sender = "testwarp@bluewindowltd.com"
-        password = "F(094719086654ur"
+        password = "F(094719086654ur"  # For security, store in Secret Manager in real use
         receiver = "release-notifications@bluewindowltd.com"
-
         smtp_server = "smtp.office365.com"
         smtp_port = 587
 
-        # Read the email content from the file created in the previous step
+        # Read the email content from the file
         with open('release_email.txt', 'r') as f:
             email_content = f.read()
 
-        # Create the MIMEText object for the email
+        # Prepare the MIMEText email object
         msg = MIMEText(email_content, 'plain', 'utf-8')
         msg['Subject'] = "Automatic Production Release Notification"
         msg['From'] = sender
@@ -66,7 +64,7 @@ EOF
 
         # Connect to the SMTP server and send the email
         with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls()  # Upgrade the connection to a secure TLS/SSL
+            server.starttls()
             server.login(sender, password)
             server.send_message(msg)
             print("Email sent successfully.")
