@@ -1,19 +1,17 @@
 timeout: "600s"
 
 steps:
-  # ----------------------------------------------------------
   # Step 1: Prepare the email content
-  # ----------------------------------------------------------
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        # 1. Get the current date/time
+        # Get the current date/time
         RELEASE_DATE=$(date '+%Y-%m-%d %H:%M:%S')
         echo "Release Date: $RELEASE_DATE"
 
-        # 2. Build the email content into a file
+        # Build the email content into a file
         cat <<EOF > release_email.txt
 Subject: Automatic Production Release Notification
 To: release-notifications@bluewindowltd.com
@@ -34,9 +32,7 @@ Regards,
 Automatic Notification System
 EOF
 
-  # ----------------------------------------------------------
   # Step 2: Send the email via Outlook SMTP
-  # ----------------------------------------------------------
   - name: 'python:3.9'
     entrypoint: python
     args:
@@ -47,7 +43,7 @@ EOF
 
         # SMTP Server Configuration for Outlook
         sender = "testwarp@bluewindowltd.com"
-        password = "F(094719086654ur"  # For security, store in Secret Manager in real use
+        password = "F(094719086654ur"  # Use Google Secret Manager in production!
         receiver = "release-notifications@bluewindowltd.com"
         smtp_server = "smtp.office365.com"
         smtp_port = 587
@@ -64,7 +60,7 @@ EOF
 
         # Connect to the SMTP server and send the email
         with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls()
+            server.starttls()  # Upgrade to a secure connection
             server.login(sender, password)
             server.send_message(msg)
             print("Email sent successfully.")
