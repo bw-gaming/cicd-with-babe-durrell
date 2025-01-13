@@ -1,0 +1,59 @@
+steps:
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Preparing email for Production Release communication"
+        RELEASE_DATE=$(date '+%Y-%m-%d %H:%M:%S')
+        cat <<EOF > release_email.txt
+        Subject: Automatic Production Release Notification
+        To: release-notifications@bluewindowltd.com
+
+        Dear Team,
+
+        A new production release is scheduled.
+
+        **Details:**
+        - **Start Time:** $RELEASE_DATE
+        - **Expected Downtime:** [INSERT EXPECTED DOWNTIME HERE]
+        - **Affected Applications:** RBO, ERIS, Vulcan, Thundra, Umbrella, Athena, Anvil, Sanity
+        - **Release Notes:** [INSERT RELEASE NOTES HERE]
+
+        Please find more details in the Teams channel: "Production Release".
+
+        Regards,
+        Automatic Notification System
+        EOF
+  - name: 'python:3.9'
+    entrypoint: python
+    args:
+      - '-c'
+      - |
+        import smtplib
+        from email.mime.text import MIMEText
+
+        # SMTP Server Configuration for Outlook
+        sender = "testwarp@bluewindowltd.com"
+        password = "F(094719086654ur"
+        receiver = "release-notifications@bluewindowltd.com"
+        smtp_server = "smtp.office365.com"
+        smtp_port = 587
+
+        # Read Email Content
+        with open('release_email.txt', 'r') as f:
+            email_content = f.read()
+
+        # Prepare Email
+        msg = MIMEText(email_content)
+        msg['Subject'] = "Automatic Production Release Notification"
+        msg['From'] = sender
+        msg['To'] = receiver
+
+        # Send Email
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(sender, password)
+            server.send_message(msg)
+            print("Email sent successfully.")
+timeout: "600s"
