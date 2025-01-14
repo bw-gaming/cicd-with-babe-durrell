@@ -1,8 +1,8 @@
 timeout: "600s"
 
 substitutions:
-  _GITHUB_TOKEN: "default-placeholder"    # Overridden by your trigger
-  _SMTP_PASSWORD: "default-placeholder"   # Overridden by your trigger
+  _GITHUB_TOKEN: "default-placeholder"  # Placeholder, overridden by trigger configuration
+  _SMTP_PASSWORD: "default-placeholder"  # Placeholder, overridden by trigger configuration
 
 steps:
   # Step 1: Fetch the latest tag and create a GitHub release
@@ -11,13 +11,12 @@ steps:
     args:
       - "-c"
       - |
-        # Capture the GitHub token from our user-defined substitution
-        GITHUB_TOKEN="${_GITHUB_TOKEN}"
-
+        # Use the GitHub token from substitutions
+        _GITHUB_TOKEN="${_GITHUB_TOKEN}"
         REPO_OWNER="bw-gaming"  # Replace with the repository owner
-        REPO_NAME="bw-rbo"      # Replace with the repository name
+        REPO_NAME="bw-rbo"  # Replace with the repository name
 
-        # Fetch the latest tag from GitHub
+        # Fetch the latest tag
         latest_tag=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
           "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/tags" | jq -r '.[0].name')
 
@@ -96,7 +95,7 @@ steps:
         smtp_server = "smtp.office365.com"
         smtp_port = 587
 
-        # Read the email content
+        # Read the email content from file
         with open('release_email.txt', 'r', encoding='utf-8') as f:
             email_body = f.read()
 
