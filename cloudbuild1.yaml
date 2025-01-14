@@ -3,20 +3,20 @@ timeout: "600s"
 substitutions:
   _GITHUB_TOKEN: "default-placeholder"  # Placeholder, overridden by trigger configuration
   _SMTP_PASSWORD: "default-placeholder"  # Placeholder, overridden by trigger configuration
+  _REPO_OWNER: "bw-gaming"  # Replace with your repository owner
+  _REPO_NAME: "cicd-with-babe-durrell"      # Replace with your repository name
 
 steps:
-  # Step 1: Fetch the latest tag and create a GitHub release
-  - name: "gcr.io/cloud-builders/curl"
+  # Step 1: Install required tools and fetch the latest tag from GitHub
+  - name: "debian:bullseye-slim"  # Lightweight Debian image
     entrypoint: "bash"
     args:
       - "-c"
       - |
-        # Use the GitHub token from substitutions
-        # GITHUB_TOKENN="$_GITHUB_TOKEN"
-        REPO_OWNER="bw-gaming"  # Replace with the repository owner
-        REPO_NAME="bw-rbo"      # Replace with the repository name
+        # Install curl and jq
+        apt-get update && apt-get install -y curl jq
 
-        # Fetch the latest tag
+        echo "Fetching the latest tag from the repository..."
         latest_tag=$(curl -s -H "Authorization: token $_GITHUB_TOKEN" \
           "https://api.github.com/repos/$_REPO_OWNER/$_REPO_NAME/tags" | jq -r '.[0].name')
 
@@ -27,7 +27,7 @@ steps:
 
         echo "Latest tag: $latest_tag"
 
-        # Create a release from the latest tag
+        echo "Creating a new release for the latest tag..."
         release_response=$(curl -s -X POST -H "Authorization: token $_GITHUB_TOKEN" \
           -H "Content-Type: application/json" \
           -d '{
@@ -53,13 +53,10 @@ steps:
     args:
       - "-c"
       - |
-        # Get the current date/time
+        echo "Preparing the email content..."
         date_str="$(date '+%Y-%m-%d %H:%M:%S')"
-
-        # Read the release note
         release_note=$(cat latest_release_note.txt)
 
-        # Create the email content in release_email.txt
         cat <<EOF > release_email.txt
         Dear Team,
 
@@ -87,7 +84,6 @@ steps:
         import smtplib
         from email.mime.text import MIMEText
 
-        # Use the SMTP password from substitutions
         sender = "monitoring@bluewindowltd.com"
         password = "${_SMTP_PASSWORD}"
         receiver = "release-notifications@bluewindowltd.com"
@@ -95,7 +91,6 @@ steps:
         smtp_server = "smtp.office365.com"
         smtp_port = 587
 
-        # Read the email content from file
         with open('release_email.txt', 'r', encoding='utf-8') as f:
             email_body = f.read()
 
