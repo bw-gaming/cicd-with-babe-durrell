@@ -38,8 +38,8 @@ steps:
         from email.mime.text import MIMEText
 
         # NOTE: In production, do not hardcode credentials!
-        sender = "testwarp@bluewindowltd.com"
-        password = "F(094719086654ur"
+        sender = "monitoring@bluewindowltd.com"
+        password = "Qad75134"
         receiver = "release-notifications@bluewindowltd.com"
 
         smtp_server = "smtp.office365.com"
