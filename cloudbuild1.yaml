@@ -1,7 +1,53 @@
 timeout: "600s"
 
+substitutions:
+  _GITHUB_TOKEN: "default-placeholder"  # Placeholder, overridden by trigger configuration
+  _SMTP_PASSWORD: "default-placeholder"  # Placeholder, overridden by trigger configuration
+
 steps:
-  # Step 1: Prepare the email content
+  # Step 1: Fetch the latest tag and create a GitHub release
+  - name: "gcr.io/cloud-builders/curl"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        # Use the GitHub token from substitutions
+        GITHUB_TOKEN="${_GITHUB_TOKEN}"
+        REPO_OWNER="bw-gaming"  # Replace with the repository owner
+        REPO_NAME="bw-rbo"  # Replace with the repository name
+
+        # Fetch the latest tag
+        latest_tag=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+          "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/tags" | jq -r '.[0].name')
+
+        if [ -z "$latest_tag" ]; then
+          echo "Error: No tags found in the repository."
+          exit 1
+        fi
+
+        echo "Latest tag: $latest_tag"
+
+        # Create a release from the latest tag
+        release_response=$(curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "tag_name": "'"$latest_tag"'",
+            "name": "Release '"$latest_tag"'",
+            "body": "Automatically generated release for '"$latest_tag"'"
+          }' "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases")
+
+        release_name=$(echo "$release_response" | jq -r .name)
+        release_body=$(echo "$release_response" | jq -r .body)
+
+        if [ -z "$release_name" ] || [ -z "$release_body" ]; then
+          echo "Error: Failed to create release. Response: $release_response"
+          exit 1
+        fi
+
+        echo "## $release_name" > latest_release_note.txt
+        echo "$release_body" >> latest_release_note.txt
+
+  # Step 2: Prepare the email content
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: "bash"
     args:
@@ -10,25 +56,29 @@ steps:
         # Get the current date/time
         date_str="$(date '+%Y-%m-%d %H:%M:%S')"
 
+        # Read the release note
+        release_note=$(cat latest_release_note.txt)
+
         # Create the email content in release_email.txt
         cat <<EOF > release_email.txt
         Dear Team,
-        
+
         A new production release is scheduled.
-        
+
         **Details:**
         - **Start Time:** $date_str
-        - **Expected Downtime:** [INSERT EXPECTED DOWNTIME HERE]
-        - **Affected Applications:** RBO, ERIS, Vulcan, Thundra, Umbrella, Athena, Anvil, Sanity
-        - **Release Notes:** [INSERT RELEASE NOTES HERE]
-        
+        - **Release Tag:** $release_note
+
+        **Release Notes:**
+        $release_note
+
         Please find more details in the Teams channel: "Production Release".
-        
+
         Regards,
         Automatic Notification System
         EOF
-        
-  # Step 2: Send the email via Outlook SMTP
+
+  # Step 3: Send the email via Outlook SMTP
   - name: "python:3.9"
     entrypoint: "python"
     args:
@@ -37,9 +87,9 @@ steps:
         import smtplib
         from email.mime.text import MIMEText
 
-        # NOTE: In production, do not hardcode credentials!
+        # Use the SMTP password from substitutions
         sender = "monitoring@bluewindowltd.com"
-        password = "Qad75134"
+        password = "${_SMTP_PASSWORD}"
         receiver = "release-notifications@bluewindowltd.com"
 
         smtp_server = "smtp.office365.com"
@@ -49,7 +99,6 @@ steps:
         with open('release_email.txt', 'r', encoding='utf-8') as f:
             email_body = f.read()
 
-        # Create a MIMEText object
         msg = MIMEText(email_body, "plain", "utf-8")
         msg["Subject"] = "Automatic Production Release Notification"
         msg["From"] = sender
