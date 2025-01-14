@@ -1,8 +1,8 @@
 timeout: "600s"
 
 substitutions:
-  _GITHUB_TOKEN: "default-placeholder"    # Overridden by your trigger configuration
-  _SMTP_PASSWORD: "default-placeholder"   # Overridden by your trigger configuration
+  _GITHUB_TOKEN: "default-placeholder"    # Overridden by your trigger
+  _SMTP_PASSWORD: "default-placeholder"   # Overridden by your trigger
 
 steps:
   # Step 1: Fetch the latest tag and create a GitHub release
