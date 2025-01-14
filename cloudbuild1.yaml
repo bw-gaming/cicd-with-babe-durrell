@@ -12,7 +12,7 @@ steps:
       - "-c"
       - |
         # Use the GitHub token from substitutions
-        _GITHUB_TOKEN="${_GITHUB_TOKEN}"
+        GITHUB_TOKEN="${_GITHUB_TOKEN}"  # Correctly reference the substitution
         REPO_OWNER="bw-gaming"  # Replace with the repository owner
         REPO_NAME="bw-rbo"  # Replace with the repository name
 
@@ -89,7 +89,7 @@ steps:
 
         # Use the SMTP password from substitutions
         sender = "monitoring@bluewindowltd.com"
-        password = "${_SMTP_PASSWORD}"
+        password = "${_SMTP_PASSWORD}"  # Correctly reference the substitution
         receiver = "release-notifications@bluewindowltd.com"
 
         smtp_server = "smtp.office365.com"
