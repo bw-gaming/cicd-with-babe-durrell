@@ -1,26 +1,22 @@
 timeout: "600s"
 
-# 1) Define which secrets to fetch from Secret Manager and map them to environment variables
-availableSecrets:
-  secretManager:
-    - versionName: "projects/nextwork-staging/secrets/GITHUB_TOKEN/versions/latest"
-      env: "GITHUB_TOKEN"
-    - versionName: "projects/nextwork-staging/secrets/SMTP_PASSWORD/versions/latest"
-      env: "SMTP_PASSWORD"
+substitutions:
+  _GITHUB_TOKEN: "default-placeholder"  # Placeholder, overridden by trigger configuration
+  _SMTP_PASSWORD: "default-placeholder"  # Placeholder, overridden by trigger configuration
 
 steps:
   # Step 1: Fetch the latest tag and create a GitHub release
   - name: "gcr.io/cloud-builders/curl"
     entrypoint: "bash"
-    env:
-      - GITHUB_TOKEN
     args:
       - "-c"
       - |
-        REPO_OWNER="bw-gaming"  # Replace with your GitHub repository owner
-        REPO_NAME="bw-rbo"      # Replace with your GitHub repository name
+        # Use the GitHub token from substitutions
+        GITHUB_TOKEN="${_GITHUB_TOKEN}"
+        REPO_OWNER="bw-gaming"  # Replace with the repository owner
+        REPO_NAME="bw-rbo"      # Replace with the repository name
 
-        # Fetch the latest tag from the GitHub repository
+        # Fetch the latest tag
         latest_tag=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
           "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/tags" | jq -r '.[0].name')
 
@@ -31,7 +27,7 @@ steps:
 
         echo "Latest tag: $latest_tag"
 
-        # Create a release on GitHub using the latest tag
+        # Create a release from the latest tag
         release_response=$(curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
           -H "Content-Type: application/json" \
           -d '{
@@ -48,7 +44,6 @@ steps:
           exit 1
         fi
 
-        # Save release notes to a file for the next step
         echo "## $release_name" > latest_release_note.txt
         echo "$release_body" >> latest_release_note.txt
 
@@ -58,13 +53,13 @@ steps:
     args:
       - "-c"
       - |
-        # Get the current date and time
+        # Get the current date/time
         date_str="$(date '+%Y-%m-%d %H:%M:%S')"
 
-        # Read the release note from the previous step
+        # Read the release note
         release_note=$(cat latest_release_note.txt)
 
-        # Create the email content and save it to a file
+        # Create the email content in release_email.txt
         cat <<EOF > release_email.txt
         Dear Team,
 
@@ -86,34 +81,33 @@ steps:
   # Step 3: Send the email via Outlook SMTP
   - name: "python:3.9"
     entrypoint: "python"
-    env:
-      - SMTP_PASSWORD
     args:
       - "-c"
       - |
         import smtplib
         from email.mime.text import MIMEText
 
+        # Use the SMTP password from substitutions
         sender = "monitoring@bluewindowltd.com"
+        password = "${_SMTP_PASSWORD}"
         receiver = "release-notifications@bluewindowltd.com"
+
         smtp_server = "smtp.office365.com"
         smtp_port = 587
 
-        # Read the email content from the file
+        # Read the email content from file
         with open('release_email.txt', 'r', encoding='utf-8') as f:
             email_body = f.read()
 
-        # Create the MIMEText email object
         msg = MIMEText(email_body, "plain", "utf-8")
         msg["Subject"] = "Automatic Production Release Notification"
         msg["From"] = sender
         msg["To"] = receiver
 
         try:
-            # Connect to the SMTP server and send the email
             with smtplib.SMTP(smtp_server, smtp_port) as server:
                 server.starttls()
-                server.login(sender, "${SMTP_PASSWORD}")
+                server.login(sender, password)
                 server.send_message(msg)
                 print("Email sent successfully.")
         except Exception as e:
