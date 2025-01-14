@@ -8,7 +8,7 @@ steps:
       - "-c"
       - |
         # Get the current date/time
-        export RELEASE_DATE=$(date '+%Y-%m-%d %H:%M:%S')
+        RELEASE_DATE="$(date '+%Y-%m-%d %H:%M:%S')"
 
         # Create the email content in release_email.txt
         cat > release_email.txt <<EOF
@@ -17,7 +17,7 @@ steps:
         A new production release is scheduled.
         
         **Details:**
-        - **Start Time:** ${RELEASE_DATE}
+        - **Start Time:** $RELEASE_DATE
         - **Expected Downtime:** [INSERT EXPECTED DOWNTIME HERE]
         - **Affected Applications:** RBO, ERIS, Vulcan, Thundra, Umbrella, Athena, Anvil, Sanity
         - **Release Notes:** [INSERT RELEASE NOTES HERE]
