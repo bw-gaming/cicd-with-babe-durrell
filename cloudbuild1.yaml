@@ -1,20 +1,23 @@
 timeout: "600s"
 
-substitutions:
-  _GITHUB_TOKEN: "default-placeholder"  # Placeholder, overridden by trigger configuration
-  _SMTP_PASSWORD: "default-placeholder"  # Placeholder, overridden by trigger configuration
+# 1) Define which secrets to fetch from Secret Manager
+#    and map them to environment variables GITHUB_TOKEN and SMTP_PASSWORD.
+secrets:
+ secretEnv:
+    GITHUB_TOKEN: "projects/nextwork-staging/secrets/GITHUB_TOKEN/versions/latest"
+    SMTP_PASSWORD: "projects/nextwork-staging/secrets/SMTP_PASSWORD/versions/latest"
 
 steps:
   # Step 1: Fetch the latest tag and create a GitHub release
   - name: "gcr.io/cloud-builders/curl"
     entrypoint: "bash"
+    env:
+      - GITHUB_TOKEN
     args:
       - "-c"
       - |
-        # Use the GitHub token from substitutions
-        GITHUB_TOKEN="${_GITHUB_TOKEN}"
-        REPO_OWNER="bw-gaming"  # Replace with the repository owner
-        REPO_NAME="bw-rbo"      # Replace with the repository name
+        REPO_OWNER="bw-gaming"  # Replace with your repository owner
+        REPO_NAME="bw-rbo"      # Replace with your repository name
 
         # Fetch the latest tag
         latest_tag=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
@@ -81,17 +84,16 @@ steps:
   # Step 3: Send the email via Outlook SMTP
   - name: "python:3.9"
     entrypoint: "python"
+    env:
+      - SMTP_PASSWORD
     args:
       - "-c"
       - |
         import smtplib
         from email.mime.text import MIMEText
 
-        # Use the SMTP password from substitutions
         sender = "monitoring@bluewindowltd.com"
-        password = "${_SMTP_PASSWORD}"
         receiver = "release-notifications@bluewindowltd.com"
-
         smtp_server = "smtp.office365.com"
         smtp_port = 587
 
@@ -107,7 +109,8 @@ steps:
         try:
             with smtplib.SMTP(smtp_server, smtp_port) as server:
                 server.starttls()
-                server.login(sender, password)
+                # Use the environment variable SMTP_PASSWORD from Secret Manager
+                server.login(sender, "${SMTP_PASSWORD}")
                 server.send_message(msg)
                 print("Email sent successfully.")
         except Exception as e:
