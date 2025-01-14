@@ -12,9 +12,9 @@ steps:
       - "-c"
       - |
         # Use the GitHub token from substitutions
-        GITHUB_TOKEN="${_GITHUB_TOKEN}"  # Correctly reference the substitution
+        GITHUB_TOKEN="${_GITHUB_TOKEN}"
         REPO_OWNER="bw-gaming"  # Replace with the repository owner
-        REPO_NAME="bw-rbo"  # Replace with the repository name
+        REPO_NAME="bw-rbo"      # Replace with the repository name
 
         # Fetch the latest tag
         latest_tag=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
@@ -89,7 +89,7 @@ steps:
 
         # Use the SMTP password from substitutions
         sender = "monitoring@bluewindowltd.com"
-        password = "${_SMTP_PASSWORD}"  # Correctly reference the substitution
+        password = "${_SMTP_PASSWORD}"
         receiver = "release-notifications@bluewindowltd.com"
 
         smtp_server = "smtp.office365.com"
