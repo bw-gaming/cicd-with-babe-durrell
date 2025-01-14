@@ -12,13 +12,13 @@ steps:
       - "-c"
       - |
         # Use the GitHub token from substitutions
-        GITHUB_TOKEN="${_GITHUB_TOKEN}"
+        # GITHUB_TOKENN="$_GITHUB_TOKEN"
         REPO_OWNER="bw-gaming"  # Replace with the repository owner
         REPO_NAME="bw-rbo"      # Replace with the repository name
 
         # Fetch the latest tag
-        latest_tag=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-          "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/tags" | jq -r '.[0].name')
+        latest_tag=$(curl -s -H "Authorization: token $_GITHUB_TOKEN" \
+          "https://api.github.com/repos/$_REPO_OWNER/$_REPO_NAME/tags" | jq -r '.[0].name')
 
         if [ -z "$latest_tag" ]; then
           echo "Error: No tags found in the repository."
@@ -28,13 +28,13 @@ steps:
         echo "Latest tag: $latest_tag"
 
         # Create a release from the latest tag
-        release_response=$(curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" \
+        release_response=$(curl -s -X POST -H "Authorization: token $_GITHUB_TOKEN" \
           -H "Content-Type: application/json" \
           -d '{
             "tag_name": "'"$latest_tag"'",
             "name": "Release '"$latest_tag"'",
             "body": "Automatically generated release for '"$latest_tag"'"
-          }' "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/releases")
+          }' "https://api.github.com/repos/$_REPO_OWNER/$_REPO_NAME/releases")
 
         release_name=$(echo "$release_response" | jq -r .name)
         release_body=$(echo "$release_response" | jq -r .body)
