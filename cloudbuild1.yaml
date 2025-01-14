@@ -48,7 +48,7 @@ steps:
           exit 1
         fi
 
-        # Save release notes to a file
+        # Save release notes to a file for the next step
         echo "## $release_name" > latest_release_note.txt
         echo "$release_body" >> latest_release_note.txt
 
@@ -58,13 +58,13 @@ steps:
     args:
       - "-c"
       - |
-        # Get the current date/time
+        # Get the current date and time
         date_str="$(date '+%Y-%m-%d %H:%M:%S')"
 
         # Read the release note from the previous step
         release_note=$(cat latest_release_note.txt)
 
-        # Create the email content
+        # Create the email content and save it to a file
         cat <<EOF > release_email.txt
         Dear Team,
 
