@@ -1,6 +1,5 @@
 timeout: "600s"
 
-# 1) Define which secrets to fetch from Secret Manager
 secrets:
 - secretEnv:
     GITHUB_TOKEN: "projects/nextwork-staging/secrets/GITHUB_TOKEN/versions/latest"
@@ -92,6 +91,7 @@ steps:
         smtp_server = "smtp.office365.com"
         smtp_port = 587
 
+        # Read the email content from file
         with open('release_email.txt', 'r', encoding='utf-8') as f:
             email_body = f.read()
 
@@ -103,6 +103,7 @@ steps:
         try:
             with smtplib.SMTP(smtp_server, smtp_port) as server:
                 server.starttls()
+                # Use environment variable SMTP_PASSWORD from Secret Manager
                 server.login(sender, "${SMTP_PASSWORD}")
                 server.send_message(msg)
                 print("Email sent successfully.")
