@@ -1,9 +1,8 @@
 timeout: "600s"
 
-# 1) Define which secrets to fetch from Secret Manager
-#    and map them to environment variables GITHUB_TOKEN and SMTP_PASSWORD.
+# 1) Define which secrets to fetch from Secret Manager.
 secrets:
- secretEnv:
+- secretEnv:
     GITHUB_TOKEN: "projects/nextwork-staging/secrets/GITHUB_TOKEN/versions/latest"
     SMTP_PASSWORD: "projects/nextwork-staging/secrets/SMTP_PASSWORD/versions/latest"
 
