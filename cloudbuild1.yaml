@@ -19,19 +19,15 @@ steps:
         pip install --upgrade pip
         pip install python-dotenv requests
 
-  # Step 3: Copy your Python script into /workspace
-  - name: "gcr.io/cloud-builders/cp"
-    args: ["github_release.py", "/workspace/"]
+  # Step 3: Copy the Python script to the workspace using Ubuntu
+  - name: "ubuntu:latest"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        cp github_release.py /workspace/
 
-  # (Optional) Step 4: Print the .env file (for debugging only!)
-  # - name: "ubuntu:latest"
-  #   entrypoint: "bash"
-  #   args:
-  #     - "-c"
-  #     - |
-  #       cat /workspace/.env
-
-  # Step 5: Execute the Python script
+  # Step 4: Execute the Python script
   - name: "python:3.10"
     entrypoint: "python"
     args: ["/workspace/github_release.py"]
