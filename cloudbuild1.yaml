@@ -1,5 +1,5 @@
 steps:
-  # Step 1: Write substitution variables to .env file
+  # Step 1: Write substitution variables to .env fil
   - name: "gcr.io/cloud-builders/base"
     entrypoint: "bash"
     args:
