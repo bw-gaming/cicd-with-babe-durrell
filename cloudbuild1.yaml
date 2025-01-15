@@ -1,125 +1,31 @@
-timeout: "600s"
-
-substitutions:
-  _GITHUB_TOKEN: "default-placeholder"  # Replace with your GitHub Personal Access Token
-  _SMTP_PASSWORD: "default-placeholder"  # Replace with your SMTP password
-  _REPO_OWNER: "bw-gaming"  # Replace with the GitHub repository owner
-  _REPO_NAME: "cicd-with-babe-durrell"  # Replace with the GitHub repository name
-
 steps:
-  # Step 1: Install required tools and fetch the latest tag from GitHub
-  - name: "debian:bullseye-slim"  # Lightweight Debian image
+  # Step 1: Write substitution variables to .env file
+  - name: "gcr.io/cloud-builders/bash"
     entrypoint: "bash"
     args:
       - "-c"
       - |
-        # Install curl and jq
-        apt-get update && apt-get install -y curl jq
+        echo "_GITHUB_TOKEN=${_GITHUB_TOKEN}" >> /workspace/.env
+        echo "_SMTP_PASSWORD=${_SMTP_PASSWORD}" >> /workspace/.env
+        echo "_REPO_OWNER=${_REPO_OWNER}" >> /workspace/.env
+        echo "_REPO_NAME=${_REPO_NAME}" >> /workspace/.env
 
-        echo "Fetching the latest tag from the repository..."
-        response=$(curl -s -H "Authorization: token $_GITHUB_TOKEN" \
-          "https://api.github.com/repos/$_REPO_OWNER/$_REPO_NAME/tags")
-
-        echo "DEBUG: API response:"
-        echo "$response"
-
-        # Check if the response contains a GitHub API error
-        if echo "$response" | jq -e '.message' > /dev/null 2>&1; then
-          error_message=$(echo "$response" | jq -r '.message')
-          echo "Error from GitHub API: $error_message"
-          exit 1
-        fi
-
-        # Extract the latest tag
-        latest_tag=$(echo "$response" | jq -r '.[0].name')
-
-        if [ -z "$latest_tag" ] || [ "$latest_tag" == "null" ]; then
-          echo "Error: No tags found in the repository."
-          exit 1
-        fi
-
-        echo "Latest tag: $latest_tag"
-
-        echo "Creating a new release for the latest tag..."
-        release_response=$(curl -s -X POST -H "Authorization: token $_GITHUB_TOKEN" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "tag_name": "'"$latest_tag"'",
-            "name": "Release '"$latest_tag"'",
-            "body": "Automatically generated release for '"$latest_tag"'"
-          }' "https://api.github.com/repos/$_REPO_OWNER/$_REPO_NAME/releases")
-
-        echo "DEBUG: Release response:"
-        echo "$release_response"
-
-        release_name=$(echo "$release_response" | jq -r .name)
-        release_body=$(echo "$release_response" | jq -r .body)
-
-        if [ -z "$release_name" ] || [ -z "$release_body" ]; then
-          echo "Error: Failed to create release. Response: $release_response"
-          exit 1
-        fi
-
-        echo "## $release_name" > latest_release_note.txt
-        echo "$release_body" >> latest_release_note.txt
-
-  # Step 2: Prepare the email content
-  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+  # Step 2: Install Python dependencies
+  - name: "python:3.10"
     entrypoint: "bash"
     args:
       - "-c"
       - |
-        echo "Preparing the email content..."
-        date_str="$(date '+%Y-%m-%d %H:%M:%S')"
-        release_note=$(cat latest_release_note.txt)
+        pip install --upgrade pip
+        pip install python-dotenv requests smtplib
 
-        cat <<EOF > release_email.txt
-        Dear Team,
+  # Step 3: Copy your Python script
+  - name: "gcr.io/cloud-builders/cp"
+    args: ["github_release.py", "/workspace/"]
 
-        A new production release is scheduled.
-
-        **Details:**
-        - **Start Time:** $date_str
-        - **Release Tag:** $release_note
-
-        **Release Notes:**
-        $release_note
-
-        Please find more details in the Teams channel: "Production Release".
-
-        Regards,
-        Automatic Notification System
-        EOF
-
-  # Step 3: Send the email via Outlook SMTP
-  - name: "python:3.9"
+  # Step 4: Execute the Python script
+  - name: "python:3.10"
     entrypoint: "python"
-    args:
-      - "-c"
-      - |
-        import smtplib
-        from email.mime.text import MIMEText
+    args: ["/workspace/github_release.py"]
 
-        sender = "monitoring@bluewindowltd.com"
-        password = "${_SMTP_PASSWORD}"
-        receiver = "release-notifications@bluewindowltd.com"
-
-        smtp_server = "smtp.office365.com"
-        smtp_port = 587
-
-        with open('release_email.txt', 'r', encoding='utf-8') as f:
-            email_body = f.read()
-
-        msg = MIMEText(email_body, "plain", "utf-8")
-        msg["Subject"] = "Automatic Production Release Notification"
-        msg["From"] = sender
-        msg["To"] = receiver
-
-        try:
-            with smtplib.SMTP(smtp_server, smtp_port) as server:
-                server.starttls()
-                server.login(sender, password)
-                server.send_message(msg)
-                print("Email sent successfully.")
-        except Exception as e:
-            print(f"Error sending email: {e}")
+timeout: "600s"
