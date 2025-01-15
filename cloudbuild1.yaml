@@ -10,14 +10,14 @@ steps:
         echo "_REPO_OWNER=${_REPO_OWNER}" >> /workspace/.env
         echo "_REPO_NAME=${_REPO_NAME}" >> /workspace/.env
 
-  # Step 2: Install Python dependencies using the official Python 3.10 image
+  # Step 2: Install Python dependencies
   - name: "python:3.10"
     entrypoint: "bash"
     args:
       - "-c"
       - |
         pip install --upgrade pip
-        pip install python-dotenv requests smtplib
+        pip install python-dotenv requests
 
   # Step 3: Copy your Python script into /workspace
   - name: "gcr.io/cloud-builders/cp"
