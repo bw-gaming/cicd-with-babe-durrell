@@ -1,6 +1,6 @@
 steps:
-  # Step 1: Write substitution variables to .env fil
-  - name: "gcr.io/cloud-builders/base"
+  # Step 1: Write substitution variables to .env file using Ubuntu
+  - name: "ubuntu:latest"
     entrypoint: "bash"
     args:
       - "-c"
@@ -10,7 +10,7 @@ steps:
         echo "_REPO_OWNER=${_REPO_OWNER}" >> /workspace/.env
         echo "_REPO_NAME=${_REPO_NAME}" >> /workspace/.env
 
-  # Step 2: Install Python dependencies
+  # Step 2: Install Python dependencies using the official Python 3.10 image
   - name: "python:3.10"
     entrypoint: "bash"
     args:
@@ -23,8 +23,8 @@ steps:
   - name: "gcr.io/cloud-builders/cp"
     args: ["github_release.py", "/workspace/"]
 
-  # (Optional) Step 4: Print the .env file (for debugging only - REMOVE once tested!)
-  # - name: "gcr.io/cloud-builders/base"
+  # (Optional) Step 4: Print the .env file (for debugging only!)
+  # - name: "ubuntu:latest"
   #   entrypoint: "bash"
   #   args:
   #     - "-c"
