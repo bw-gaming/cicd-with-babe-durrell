@@ -1,6 +1,6 @@
 steps:
   # Step 1: Write substitution variables to .env file
-  - name: "gcr.io/cloud-builders/bash"
+  - name: "gcr.io/cloud-builders/base"
     entrypoint: "bash"
     args:
       - "-c"
@@ -19,11 +19,19 @@ steps:
         pip install --upgrade pip
         pip install python-dotenv requests smtplib
 
-  # Step 3: Copy your Python script
+  # Step 3: Copy your Python script into /workspace
   - name: "gcr.io/cloud-builders/cp"
     args: ["github_release.py", "/workspace/"]
 
-  # Step 4: Execute the Python script
+  # (Optional) Step 4: Print the .env file (for debugging only - REMOVE once tested!)
+  # - name: "gcr.io/cloud-builders/base"
+  #   entrypoint: "bash"
+  #   args:
+  #     - "-c"
+  #     - |
+  #       cat /workspace/.env
+
+  # Step 5: Execute the Python script
   - name: "python:3.10"
     entrypoint: "python"
     args: ["/workspace/github_release.py"]
